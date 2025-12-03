@@ -1,0 +1,758 @@
+{
+  "name": "Automated Contract Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Client Service Contract",
+        "formDescription": "Input deal details. You will be notified when the contract document is ready.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Company Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Address",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "City",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "State",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Zip Code",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Plan",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Starter Plan"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Service Fee",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Start Date",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Term Length (In Months)",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Monthly Cost",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Notify Email When Done",
+              "fieldType": "email",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Preparing new service contract. You will be notified when the document is ready through the provided email."
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        352
+      ],
+      "id": "2ccc68cd-f9ce-413c-a3e5-af7816f17ae5",
+      "name": "On form submission",
+      "webhookId": "b1802665-1833-4e42-822f-5b20af69d9db"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1568,
+        -176
+      ],
+      "id": "37835185-ffb3-4894-8960-8e8341db8e03",
+      "name": "Wait",
+      "webhookId": "8b5be14d-378b-4f56-a435-7348b06f1020"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4d1f8758-05d9-4036-8b09-6d62cd7130c7",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        208
+      ],
+      "id": "116cd718-6d8f-4c89-9605-ec8638b200b9",
+      "name": "If contract does not exist"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input data\nconst data = items[0].json;\n\n// Helper: format money\nfunction formatMoney(value) {\n  const num = Number(value);\n  if (isNaN(num)) return null;\n  return num.toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\n}\n\n// Helper: format date\nfunction formatDate(dateStr) {\n  const d = new Date(dateStr);\n  if (isNaN(d)) return null;\n  return d.toLocaleDateString(\"en-US\", {\n    year: \"numeric\",\n    month: \"long\",\n    day: \"2-digit\",\n  });\n}\n\n// Helper: add months\nfunction addMonths(dateStr, months) {\n  const d = new Date(dateStr);\n  if (isNaN(d)) return null;\n  d.setMonth(d.getMonth() + Number(months));\n  return d;\n}\n\n// Required fields\nconst requiredFields = [\n  \"Company Name\",\n  \"Address\",\n  \"City\",\n  \"State\",\n  \"Zip Code\",\n  \"Plan\",\n  \"Service Fee\",\n  \"Start Date\",\n  \"Term Length (In Months)\",\n  \"Notify Email When Done\",\n  \"Monthly Cost\"\n];\n\n// Collect validation errors\nconst errors = [];\n\n// Check required fields\nrequiredFields.forEach(field => {\n  if (!data[field] || data[field].toString().trim() === \"\") {\n    errors.push({\n      field,\n      error: `${field} is required.`\n    });\n  }\n});\n\n// Validate Service Fee\nif (!isNaN(Number(data[\"Service Fee\"])) === false) {\n  errors.push({\n    field: \"Service Fee\",\n    error: \"Service Fee must be a valid number.\",\n  });\n}\n\n// Validate Monthly Cost\nif (!isNaN(Number(data[\"Monthly Cost\"])) === false) {\n  errors.push({\n    field: \"Monthly Cost\",\n    error: \"Monthly Cost must be a valid number.\",\n  });\n}\n\n// Validate Term Length\nif (!isNaN(Number(data[\"Term Length (In Months)\"])) === false) {\n  errors.push({\n    field: \"Term Length (In Months)\",\n    error: \"Term Length must be a valid number.\",\n  });\n}\n\n// Validate Start Date\nconst startDate = new Date(data[\"Start Date\"]);\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nif (isNaN(startDate)) {\n  errors.push({\n    field: \"Start Date\",\n    error: \"Start Date must be a valid date.\",\n  });\n} else if (startDate < today) {\n  errors.push({\n    field: \"Start Date\",\n    error: \"Start Date cannot be earlier than today.\",\n  });\n}\n\n// Return errors if any\nif (errors.length > 0) {\n  return [\n    {\n      json: { errors }\n    }\n  ];\n}\n\n// Compute formatted fields\nconst formattedServiceFee = formatMoney(data[\"Service Fee\"]);\nconst formattedMonthlyCost = formatMoney(data[\"Monthly Cost\"]);\nconst formattedTotalValue = formatMoney(Number(data[\"Monthly Cost\"]) * Number(data[\"Term Length (In Months)\"]));\nconst formattedStartDate = formatDate(data[\"Start Date\"]);\nconst endDateObj = addMonths(data[\"Start Date\"], data[\"Term Length (In Months)\"]);\nconst formattedEndDate = formatDate(endDateObj);\n\n// Build full address safely (no double commas)\nfunction cleanFullAddress(addr, city, state, zip) {\n  return [addr, city, state, zip].filter(Boolean).join(\", \");\n}\n\nconst fullAddress = cleanFullAddress(\n  data[\"Address\"],\n  data[\"City\"],\n  data[\"State\"],\n  data[\"Zip Code\"]\n);\n\n// Final Output\nreturn [\n  {\n    json: {\n      contract_title: `${data[\"Company Name\"]} - Service Agreement - ${formattedStartDate}`,\n      company_name: data[\"Company Name\"],\n      address: data[\"Address\"],\n      city: data[\"City\"],\n      state: data[\"State\"],\n      zipcode: data[\"Zip Code\"],\n      full_address: fullAddress,\n      plan: data[\"Plan\"],\n      service_fee: formattedServiceFee,\n      total_value: formattedTotalValue,\n      contract_start_date: formattedStartDate,\n      term_length: Number(data[\"Term Length (In Months)\"]),\n      contract_end_date: formattedEndDate,\n      notify_email: data[\"Notify Email When Done\"],\n      monthly_cost: formattedMonthlyCost,\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        352
+      ],
+      "id": "a50cd3b5-21eb-4402-8258-fa87a32f6f6b",
+      "name": "Parse data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse data').item.json.notify_email }}",
+        "subject": "=Contract Duplicate:  {{ $('Parse data').item.json.company_name }} - {{ $('Parse data').item.json.plan }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    A contract for <strong>{{ $('Parse data').item.json.company_name }}</strong> was already generated earlier today. \n    To avoid duplicates, the system did not create a new document.\n  </p>\n\n  <p>\n    You may access the existing contract using the link below:<br>\n    <a href=\"http://docs.google.com/document/d/{{ $('Search for existing contract').item.json.id }}\" \n       style=\"color: #1a73e8; text-decoration: underline;\">\n      http://docs.google.com/document/d/{{ $('Search for existing contract').item.json.id }}\n    </a>\n  </p>\n\n  <p>\n    <strong>Document Title:</strong> {{ $('Search for existing contract').item.json.name }}\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">ℹ️ Action Required</h3>\n\n  <p>\n    If you need to generate a new contract for this customer, please delete the existing document first and then run the contract generation process again.\n  </p>\n\n  <p>\n    This helps ensure accuracy and prevents multiple versions of the same contract from being created on the same day.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">🕒 Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        208
+      ],
+      "id": "689b1723-b501-4380-bbc1-5ea5d41caa9b",
+      "name": "Send a duplicate contract message",
+      "webhookId": "e401a4f8-e53f-47c2-ab3b-90f861912c13",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2GxDuwn7m74hByRI",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1VR0-SA0Z33dWaHbHATsvLAiNugHVm09BITYzFseC5M8",
+          "mode": "list",
+          "cachedResultName": "Contract - Starter Plan Template",
+          "cachedResultUrl": "https://docs.google.com/document/d/1VR0-SA0Z33dWaHbHATsvLAiNugHVm09BITYzFseC5M8/edit?usp=drivesdk"
+        },
+        "name": "={{ $('Parse data').item.json.contract_title }}",
+        "sameFolder": false,
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1PMZ7eZBIk3vq7JoXwuqMeaGrpzUCn_pO",
+          "mode": "list",
+          "cachedResultName": "Sent Contracts",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1PMZ7eZBIk3vq7JoXwuqMeaGrpzUCn_pO"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        16
+      ],
+      "id": "312b4d5e-80b5-4d68-8c5e-07be14ccce82",
+      "name": "Copy contract template",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KOiUMaD1bJqZHon6",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $json.contract_title }}",
+        "limit": 1,
+        "filter": {
+          "includeTrashed": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        672,
+        208
+      ],
+      "id": "18484f38-fc8e-4ecf-8287-bbe8ce718e62",
+      "name": "Search for existing contract",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KOiUMaD1bJqZHon6",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "{{company_name}}",
+              "replaceText": "={{ $('Parse data').item.json.company_name }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{address}}",
+              "replaceText": "={{ $('Parse data').item.json.address }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{city}}",
+              "replaceText": "={{ $('Parse data').item.json.city }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{state}}",
+              "replaceText": "={{ $('Parse data').item.json.state }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{zip_code}}",
+              "replaceText": "={{ $('Parse data').item.json.zipcode }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{plan}}",
+              "replaceText": "={{ $('Parse data').item.json.plan }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{service_fee}}",
+              "replaceText": "={{ $('Parse data').item.json.service_fee }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{start_date}}",
+              "replaceText": "={{ $('Parse data').item.json.contract_start_date }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -176
+      ],
+      "id": "f2552afe-8a14-49da-9437-9151ec72dd65",
+      "name": "Update contract",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "Z1q4tO7Zq985fO6o",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aded5233-778a-4dc9-9f9a-ab1f77ade0c6",
+              "leftValue": "={{ $('Update contract').item.json.documentId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "b73c8b31-b6e1-4a7d-ac09-f830f00c16af",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2224,
+        -176
+      ],
+      "id": "c8acb254-7d35-4ef5-ad6c-2a37c5698b4f",
+      "name": "If successfully updated",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse data').item.json.notify_email }}",
+        "subject": "=Contract Ready: {{ $('Parse data').item.json.company_name }} – {{ $('Parse data').item.json.plan }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    A new contract has been successfully generated and is now ready for your review before sending it to the client.\n  </p>\n\n  <p>\n    You can access the document here:<br>\n    <a href=\"http://docs.google.com/document/d/{{ $('Update contract').item.json.documentId }}\" style=\"color: #1a73e8; text-decoration: underline;\">\n      http://docs.google.com/document/d/{{ $('Update contract').item.json.documentId }}\n    </a>\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">📄 Contract Summary</h3>\n\n  <p><strong>Company:</strong> {{ $('Parse data').item.json.company_name }}</p>\n  <p><strong>Plan:</strong> {{ $('Parse data').item.json.plan }}</p>\n  <p><strong>Monthly Cost:</strong> {{ $('Parse data').item.json.monthly_cost }}</p>\n  <p><strong>Service Fee:</strong> {{ $('Parse data').item.json.service_fee }}</p>\n  <p><strong>Contract Start Date:</strong> {{ $('Parse data').item.json.contract_start_date }}</p>\n  <p><strong>Contract End Date:</strong> {{ $('Parse data').item.json.contract_end_date }}</p>\n  <p><strong>Term Length:</strong> {{ $('Parse data').item.json.term_length }} months</p>\n  <p><strong>Total Contract Value:</strong> {{ $('Parse data').item.json.total_value }}</p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">✔️ Next Steps for You</h3>\n  <ol style=\"padding-left: 18px;\">\n    <li>Review the generated contract for accuracy.</li>\n    <li>If everything looks correct, send it to the client for their e-signature.</li>\n    <li>If updates or corrections are needed, please reply to this email with the details.</li>\n  </ol>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">🕒 Generation Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2448,
+        -224
+      ],
+      "id": "59d5b438-5707-4677-8096-d3500842cf19",
+      "name": "Send generated contract message",
+      "webhookId": "ecc91baf-5713-4d22-beb7-94be448dc9c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2GxDuwn7m74hByRI",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse data').item.json.notify_email }}",
+        "subject": "=Unable to generate contract: {{ $('Parse data').item.json.company_name }} – {{ $('Parse data').item.json.plan }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    Hello,\n  </p>\n\n  <p>\n    We attempted to generate a contract for <strong>{{ $('Parse data').item.json.company_name }}</strong>, but something went wrong during the process.\n  </p>\n\n  <p>\n    The issue has been reported to the system administrator for investigation. No contract has been created at this time.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">Next Steps for You</h3>\n  <ul>\n    <li>You do not need to take any immediate action.</li>\n    <li>The administrator will review the issue and resolve it.</li>\n    <li>Once the contract is successfully generated, you will receive a notification with the document link.</li>\n  </ul>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2448,
+        16
+      ],
+      "id": "1bc0f9eb-87e3-4bfd-ab04-2129c73e416f",
+      "name": "Send error message to user",
+      "webhookId": "ecc91baf-5713-4d22-beb7-94be448dc9c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2GxDuwn7m74hByRI",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse data').item.json.notify_email }}",
+        "subject": "=Unable to generate contract: {{ $('Parse data').item.json.company_name }} – {{ $('Parse data').item.json.plan }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    Hello Admin,\n  </p>\n\n  <p>\n    A contract generation attempt has failed. Please review the details below for troubleshooting.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">📂 Input Data</h3>\n  <pre style=\"background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\">\n<code>{{ JSON.stringify($json, null, 2) }}</code>\n  </pre>\n\n  <h3 style=\"margin-bottom: 10px;\">⚠️ Caught Error</h3>\n  <strong>Update Contract</strong>\n  <pre style=\"background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\">\n<code>{{ JSON.stringify($('Update contract').item.json, null, 2) }}</code>\n  </pre><br/>\n  <strong>Share Contract</strong>\n  <pre style=\"background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\">\n<code>{{ JSON.stringify($('Share file').item.json, null, 2) }}</code>\n  </pre>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <p>\n    Timestamp: <strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong>\n  </p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2448,
+        208
+      ],
+      "id": "9d41ec76-3985-466c-98d8-065de7354a08",
+      "name": "Send error message to administrator",
+      "webhookId": "ecc91baf-5713-4d22-beb7-94be448dc9c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2GxDuwn7m74hByRI",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3b824377-c9ed-40ca-be9c-93469c0b1356",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        16
+      ],
+      "id": "56d65479-63d2-4abf-b4f8-53f535583a34",
+      "name": "If template copied successfully"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1fce497-8527-4882-927c-2d96d64512e5",
+              "leftValue": "={{ $json.errors }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        352
+      ],
+      "id": "1d538e61-a7de-472f-99c7-30f532a7a8e9",
+      "name": "If have invalid inputs"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['Notify Email When Done'] }}",
+        "subject": "=Unable to generate contract:  {{ $('On form submission').item.json['Company Name'] }} - {{ $('On form submission').item.json.Plan }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        400
+      ],
+      "id": "ac07f187-3bde-4e21-9c39-7792043ffb05",
+      "name": "Send an invalid fields error message",
+      "webhookId": "e401a4f8-e53f-47c2-ab3b-90f861912c13",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2GxDuwn7m74hByRI",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Parse data').first().json;\nlet errorListHTML = '';\n\nif (data.errors && data.errors.length > 0) {\n  errorListHTML = '<ul>';\n  data.errors.forEach(err => {\n    errorListHTML += `<li><strong>${err.field}:</strong> ${err.error}</li>`;\n  });\n  errorListHTML += '</ul>';\n}\n\nconst emailHTML = `\n<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>Hello ${data.agent_name || 'Sales Agent'},</p>\n\n  <p>\n    We attempted to generate a contract for the company: <strong>${data.company_name || ''}</strong>, \n    but some required fields have missing or invalid information. Please review the errors below and update the form accordingly.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 20px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">⚠️ Fields with Errors</h3>\n  ${errorListHTML}\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 20px 0;\">\n\n  <p>\n    Once the errors have been corrected, you can try generating the contract again. If you need assistance, please contact the system administrator.\n  </p>\n\n  <p style=\"margin-top: 20px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n`;\n\n// Return as output for Gmail node\nreturn [\n  {\n    json: {\n      html: emailHTML\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        400
+      ],
+      "id": "64ccc597-b129-4364-aa73-2e14797ccf8f",
+      "name": "Prepare error message"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "user",
+            "emailAddress": "={{ $('Parse data').item.json.notify_email }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2000,
+        -176
+      ],
+      "id": "77199668-6b56-422e-8527-bf7a8c7708e1",
+      "name": "Share file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KOiUMaD1bJqZHon6",
+          "name": "Hiro [hiro.alexandre.abejo@gmail.com]"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "Company Name": "HiroMina LTD",
+          "Address": "Anna Parker, 10 Campbell Ave",
+          "City": "Tucson",
+          "State": "Arizona",
+          "Zip Code": "85641",
+          "Plan": "Starter Plan",
+          "Service Fee": "1000",
+          "Start Date": "2025-12-05",
+          "Term Length (In Months)": 5,
+          "Notify Email When Done": "ckyshi@gmail.com",
+          "Monthly Cost": "2000",
+          "submittedAt": "2025-12-03T17:29:13.322+00:00",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Parse data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Update contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If contract does not exist": {
+      "main": [
+        [
+          {
+            "node": "Copy contract template",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a duplicate contract message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse data": {
+      "main": [
+        [
+          {
+            "node": "If have invalid inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy contract template": {
+      "main": [
+        [
+          {
+            "node": "If template copied successfully",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for existing contract": {
+      "main": [
+        [
+          {
+            "node": "If contract does not exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update contract": {
+      "main": [
+        [
+          {
+            "node": "Share file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If successfully updated": {
+      "main": [
+        [
+          {
+            "node": "Send generated contract message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send error message to user",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send error message to administrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If template copied successfully": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send error message to administrator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send error message to user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If have invalid inputs": {
+      "main": [
+        [
+          {
+            "node": "Search for existing contract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare error message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare error message": {
+      "main": [
+        [
+          {
+            "node": "Send an invalid fields error message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file": {
+      "main": [
+        [
+          {
+            "node": "If successfully updated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "43471b83-8430-4fe6-b7d6-75510cc89326",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2318da3f9f5fdaee66dedb6f461dd5c2c4f0c5c3d7cbc6c723cb35ae5e865d31"
+  },
+  "id": "kjwyZJm6Twsl0bVj",
+  "tags": []
+}
