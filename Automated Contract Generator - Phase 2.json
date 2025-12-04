@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Generated contract directory id\nconst contractsDirectoryId = \"1X-gLKvqUpjaQxORWh0yyWgw9Pvyj-4bM\";\n\n// Get input data\nconst data = items[0].json;\n\n// Helper: format money\nfunction formatMoney(value) {\n  const num = Number(value);\n  if (isNaN(num)) return null;\n  return num.toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\n}\n\n// Helper: format date\nfunction formatDate(dateStr) {\n  const d = new Date(dateStr);\n  if (isNaN(d)) return null;\n  return d.toLocaleDateString(\"en-US\", {\n    year: \"numeric\",\n    month: \"long\",\n    day: \"2-digit\",\n  });\n}\n\n// Helper: add months\nfunction addMonths(dateStr, months) {\n  const d = new Date(dateStr);\n  if (isNaN(d)) return null;\n  d.setMonth(d.getMonth() + Number(months));\n  return d;\n}\n\n// Required fields\nconst requiredFields = [\n  \"Company Name\",\n  \"Address\",\n  \"City\",\n  \"State\",\n  \"Zip Code\",\n  \"Plan\",\n  \"Service Fee\",\n  \"Start Date\",\n  \"Term Length (In Months)\",\n  \"Notify Email When Done\",\n  \"Monthly Cost\"\n];\n\n// Collect validation errors\nconst errors = [];\n\n// Check required fields\nrequiredFields.forEach(field => {\n  if (!data[field] || data[field].toString().trim() === \"\") {\n    errors.push({\n      field,\n      error: `${field} is required.`\n    });\n  }\n});\n\n// Validate Service Fee\nif (!isNaN(Number(data[\"Service Fee\"])) === false) {\n  errors.push({\n    field: \"Service Fee\",\n    error: \"Service Fee must be a valid number.\",\n  });\n}\n\n// Validate Monthly Cost\nif (!isNaN(Number(data[\"Monthly Cost\"])) === false) {\n  errors.push({\n    field: \"Monthly Cost\",\n    error: \"Monthly Cost must be a valid number.\",\n  });\n}\n\n// Validate Term Length\nif (!isNaN(Number(data[\"Term Length (In Months)\"])) === false) {\n  errors.push({\n    field: \"Term Length (In Months)\",\n    error: \"Term Length must be a valid number.\",\n  });\n}\n\n// Validate Start Date\nconst startDate = new Date(data[\"Start Date\"]);\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nif (isNaN(startDate)) {\n  errors.push({\n    field: \"Start Date\",\n    error: \"Start Date must be a valid date.\",\n  });\n} else if (startDate < today) {\n  errors.push({\n    field: \"Start Date\",\n    error: \"Start Date cannot be earlier than today.\",\n  });\n}\n\n// Return errors if any\nif (errors.length > 0) {\n  return [\n    {\n      json: { errors }\n    }\n  ];\n}\n\n// Compute formatted fields\nconst formattedServiceFee = formatMoney(data[\"Service Fee\"]);\nconst formattedMonthlyCost = formatMoney(data[\"Monthly Cost\"]);\nconst formattedTotalValue = formatMoney(Number(data[\"Monthly Cost\"]) * Number(data[\"Term Length (In Months)\"]));\nconst formattedStartDate = formatDate(data[\"Start Date\"]);\nconst endDateObj = addMonths(data[\"Start Date\"], data[\"Term Length (In Months)\"]);\nconst formattedEndDate = formatDate(endDateObj);\n\n// Build full address safely (no double commas)\nfunction cleanFullAddress(addr, city, state, zip) {\n  return [addr, city, state, zip].filter(Boolean).join(\", \");\n}\n\nconst fullAddress = cleanFullAddress(\n  data[\"Address\"],\n  data[\"City\"],\n  data[\"State\"],\n  data[\"Zip Code\"]\n);\n\nlet contractTemplateId = \"Starter\";\nswitch(data[\"Plan\"]){\n  case \"Starter Plan\": \n    contractTemplateId = \"16Bv45xVl_sSp5YnMiEYUlRSETe1LEivrCWSAyQ7gc2I\"; \n    break;\n  case \"Growth Plan\": \n    contractTemplateId = \"1sljNvIb0m6MnB8j9EdNHLMydDT-LL8auH1i58FSNzSI\"; \n    break;\n  case \"Enterprise Plan\": \n    contractTemplateId = \"1m5yK2PvyeHJgKPuENNOxmQJgqbYiy-P4--QYvKoCg-k\"; \n    break;\n  case \"Website plan\": \n    contractTemplateId = \"1Zr3NyQKNh_GC4Ngdv1HdMdBvc0ti0jzAWl92lgakCmc\"; \n    break;\n  case \"Hosting plan\": \n    contractTemplateId = \"1iYbCbgmml6h_tPknWwZnkB7I7Qzn0QY_AMQLqLkdVy8\"; \n    break;\n}\n\n// Final Output\nreturn [\n  {\n    json: {\n      contract_title: `${data[\"Company Name\"]} - Service Agreement - ${formattedStartDate}`,\n      company_name: data[\"Company Name\"],\n      address: data[\"Address\"],\n      city: data[\"City\"],\n      state: data[\"State\"],\n      zipcode: data[\"Zip Code\"],\n      full_address: fullAddress,\n      plan: data[\"Plan\"],\n      service_fee: formattedServiceFee,\n      total_value: formattedTotalValue,\n      contract_start_date: formattedStartDate,\n      term_length: Number(data[\"Term Length (In Months)\"]),\n      contract_end_date: formattedEndDate,\n      notify_email: data[\"Notify Email When Done\"],\n      monthly_cost: formattedMonthlyCost,\n      contracts: {\n        contacts_directory_id: contractsDirectoryId,\n        contract_template_id: contractTemplateId,\n      }\n    }\n  }\n];\n"
+        "jsCode": "// Generated contract directory id\nconst contractsDirectoryId = \"1X-gLKvqUpjaQxORWh0yyWgw9Pvyj-4bM\";\nconst adminEmail = \"ckyshi@gmail.com\"\n\n// Get input data\nconst data = items[0].json;\n\n// Helper: format money\nfunction formatMoney(value) {\n  const num = Number(value);\n  if (isNaN(num)) return null;\n  return num.toLocaleString(\"en-US\", { style: \"currency\", currency: \"USD\" });\n}\n\n// Helper: format date\nfunction formatDate(dateStr) {\n  const d = new Date(dateStr);\n  if (isNaN(d)) return null;\n  return d.toLocaleDateString(\"en-US\", {\n    year: \"numeric\",\n    month: \"long\",\n    day: \"2-digit\",\n  });\n}\n\n// Helper: add months\nfunction addMonths(dateStr, months) {\n  const d = new Date(dateStr);\n  if (isNaN(d)) return null;\n  d.setMonth(d.getMonth() + Number(months));\n  return d;\n}\n\n// Required fields\nconst requiredFields = [\n  \"Company Name\",\n  \"Address\",\n  \"City\",\n  \"State\",\n  \"Zip Code\",\n  \"Plan\",\n  \"Service Fee\",\n  \"Start Date\",\n  \"Term Length (In Months)\",\n  \"Notify Email When Done\",\n  \"Monthly Cost\"\n];\n\n// Collect validation errors\nconst errors = [];\n\n// Check required fields\nrequiredFields.forEach(field => {\n  if (!data[field] || data[field].toString().trim() === \"\") {\n    errors.push({\n      field,\n      error: `${field} is required.`\n    });\n  }\n});\n\n// Validate Service Fee\nif (!isNaN(Number(data[\"Service Fee\"])) === false) {\n  errors.push({\n    field: \"Service Fee\",\n    error: \"Service Fee must be a valid number.\",\n  });\n}\n\n// Validate Monthly Cost\nif (!isNaN(Number(data[\"Monthly Cost\"])) === false) {\n  errors.push({\n    field: \"Monthly Cost\",\n    error: \"Monthly Cost must be a valid number.\",\n  });\n}\n\n// Validate Term Length\nif (!isNaN(Number(data[\"Term Length (In Months)\"])) === false) {\n  errors.push({\n    field: \"Term Length (In Months)\",\n    error: \"Term Length must be a valid number.\",\n  });\n}\n\n// Validate Start Date\nconst startDate = new Date(data[\"Start Date\"]);\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nif (isNaN(startDate)) {\n  errors.push({\n    field: \"Start Date\",\n    error: \"Start Date must be a valid date.\",\n  });\n} else if (startDate < today) {\n  errors.push({\n    field: \"Start Date\",\n    error: \"Start Date cannot be earlier than today.\",\n  });\n}\n\n// Return errors if any\nif (errors.length > 0) {\n  return [\n    {\n      json: { errors }\n    }\n  ];\n}\n\n// Compute formatted fields\nconst formattedServiceFee = formatMoney(data[\"Service Fee\"]);\nconst formattedMonthlyCost = formatMoney(data[\"Monthly Cost\"]);\nconst formattedTotalValue = formatMoney(Number(data[\"Monthly Cost\"]) * Number(data[\"Term Length (In Months)\"]));\nconst formattedStartDate = formatDate(data[\"Start Date\"]);\nconst endDateObj = addMonths(data[\"Start Date\"], data[\"Term Length (In Months)\"]);\nconst formattedEndDate = formatDate(endDateObj);\n\n// Build full address safely (no double commas)\nfunction cleanFullAddress(addr, city, state, zip) {\n  return [addr, city, state, zip].filter(Boolean).join(\", \");\n}\n\nconst fullAddress = cleanFullAddress(\n  data[\"Address\"],\n  data[\"City\"],\n  data[\"State\"],\n  data[\"Zip Code\"]\n);\n\nlet contractTemplateId = \"Starter\";\nswitch(data[\"Plan\"]){\n  case \"Starter Plan\": \n    contractTemplateId = \"16Bv45xVl_sSp5YnMiEYUlRSETe1LEivrCWSAyQ7gc2I\"; \n    break;\n  case \"Growth Plan\": \n    contractTemplateId = \"1sljNvIb0m6MnB8j9EdNHLMydDT-LL8auH1i58FSNzSI\"; \n    break;\n  case \"Enterprise Plan\": \n    contractTemplateId = \"1m5yK2PvyeHJgKPuENNOxmQJgqbYiy-P4--QYvKoCg-k\"; \n    break;\n  case \"Website plan\": \n    contractTemplateId = \"1Zr3NyQKNh_GC4Ngdv1HdMdBvc0ti0jzAWl92lgakCmc\"; \n    break;\n  case \"Hosting plan\": \n    contractTemplateId = \"1iYbCbgmml6h_tPknWwZnkB7I7Qzn0QY_AMQLqLkdVy8\"; \n    break;\n}\n\n// Final Output\nreturn [\n  {\n    json: {\n      contract_title: `${data[\"Company Name\"]} - Service Agreement - ${formattedStartDate}`,\n      company_name: data[\"Company Name\"],\n      address: data[\"Address\"],\n      city: data[\"City\"],\n      state: data[\"State\"],\n      zipcode: data[\"Zip Code\"],\n      full_address: fullAddress,\n      plan: data[\"Plan\"],\n      service_fee: formattedServiceFee,\n      total_value: formattedTotalValue,\n      contract_start_date: formattedStartDate,\n      term_length: Number(data[\"Term Length (In Months)\"]),\n      contract_end_date: formattedEndDate,\n      notify_email: data[\"Notify Email When Done\"],\n      monthly_cost: formattedMonthlyCost,\n      contracts: {\n        contacts_directory_id: contractsDirectoryId,\n        contract_template_id: contractTemplateId,\n      },\n      admin: {\n        admin_email: adminEmail\n      }\n    }\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -481,7 +481,7 @@
     {
       "parameters": {
         "fromEmail": "automation@goconstellation.com",
-        "toEmail": "={{ $('Parse data').item.json.notify_email }}",
+        "toEmail": "={{ $('Parse data').item.json.admin.admin_email }}",
         "subject": "=Unable to generate contract: {{ $('Parse data').item.json.company_name }} – {{ $('Parse data').item.json.plan }}",
         "html": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    Hello Admin,\n  </p>\n\n  <p>\n    A contract generation attempt has failed. Please review the details below for troubleshooting.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">📂 Input Data</h3>\n  <pre style=\"background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\">\n<code>{{ JSON.stringify($json, null, 2) }}</code>\n  </pre>\n\n  <h3 style=\"margin-bottom: 10px;\">⚠️ Caught Error</h3>\n  <strong>Update Contract</strong>\n  <pre style=\"background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\">\n<code>{{ JSON.stringify($('Update contract').item.json, null, 2) }}</code>\n  </pre><br/>\n  <strong>Share Contract</strong>\n  <pre style=\"background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\">\n<code>{{ JSON.stringify($('Share file').item.json, null, 2) }}</code>\n  </pre>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <p>\n    Timestamp: <strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong>\n  </p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n"
       },
@@ -489,7 +489,7 @@
       "typeVersion": 1,
       "position": [
         -512,
-        96
+        128
       ],
       "id": "53bb8bf8-3528-43d2-aed5-ba1bbb74dd67",
       "name": "Send error message to administrator via Mailgun",
@@ -534,7 +534,7 @@
     },
     {
       "parameters": {
-        "content": "### Duplicated!",
+        "content": "### Warning - Duplicated!",
         "height": 224
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -561,6 +561,22 @@
       "typeVersion": 1,
       "id": "468eceb6-4d95-4b1d-83e6-40c8c84b0d99",
       "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "### Initial setup\n\nChange the adminEmail to where you want error message to be sent to.\n\nUpdate all Google Doc Ids and Directory Ids",
+        "height": 176,
+        "width": 336,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2768,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "84cc3c42-ea71-4b1a-b6a7-7e4590878599",
+      "name": "Sticky Note4"
     }
   ],
   "pinData": {
@@ -796,11 +812,14 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "availableInMCP": false
   },
-  "versionId": "724f870a-e7fd-488e-a81f-ba3acfc144ac",
+  "versionId": "4ee98e72-57ab-4497-8178-d23a0cf23898",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4e5736935580e3dce6e75f23d24e3c8372331788d6ecf5f4a287b0bdfa6129c9"
