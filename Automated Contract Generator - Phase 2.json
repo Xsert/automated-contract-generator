@@ -54,7 +54,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2768,
+        -2800,
         240
       ],
       "id": "f158cd6c-7d8d-48c8-909e-a0769eab9703",
@@ -186,7 +186,7 @@
       "credentials": {
         "googleDocsOAuth2Api": {
           "id": "DeWKIfdXagYUUoc1",
-          "name": "Google Docs account"
+          "name": "PC Google Docs"
         }
       }
     },
@@ -305,29 +305,6 @@
     },
     {
       "parameters": {
-        "sendTo": "={{ $('On form submission').item.json['Notify Email When Done'] }}",
-        "subject": "=Unable to generate contract:  {{ $('On form submission').item.json['Company Name'] }} - {{ $('On form submission').item.json.Plan }}",
-        "message": "={{ $json.html }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [
-        -2096,
-        288
-      ],
-      "id": "44eb15b2-4ed8-43fd-ba10-1dba9a93e5a7",
-      "name": "Send an invalid fields error message",
-      "webhookId": "e401a4f8-e53f-47c2-ab3b-90f861912c13",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "2gh7c6EkMyawzU16",
-          "name": "PC Email Account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const data = $('Parse data').first().json;\nlet errorListHTML = '';\n\nif (data.errors && data.errors.length > 0) {\n  errorListHTML = '<ul>';\n  data.errors.forEach(err => {\n    errorListHTML += `<li><strong>${err.field}:</strong> ${err.error}</li>`;\n  });\n  errorListHTML += '</ul>';\n}\n\nconst emailHTML = `\n<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>Hello ${data.agent_name || 'Sales Agent'},</p>\n\n  <p>\n    We attempted to generate a contract for the company: <strong>${data.company_name || ''}</strong>, \n    but some required fields have missing or invalid information. Please review the errors below and update the form accordingly.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 20px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">⚠️ Fields with Errors</h3>\n  ${errorListHTML}\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 20px 0;\">\n\n  <p>\n    Once the errors have been corrected, you can try generating the contract again. If you need assistance, please contact the system administrator.\n  </p>\n\n  <p style=\"margin-top: 20px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n`;\n\n// Return as output for Gmail node\nreturn [\n  {\n    json: {\n      html: emailHTML\n    }\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
@@ -349,7 +326,7 @@
         },
         "permissionsUi": {
           "permissionsValues": {
-            "role": "reader",
+            "role": "writer",
             "type": "user",
             "emailAddress": "={{ $('Parse data').item.json.notify_email }}"
           }
@@ -417,7 +394,7 @@
         "fromEmail": "automation@goconstellation.com",
         "toEmail": "={{ $('Parse data').item.json.notify_email }}",
         "subject": "=Contract Duplicate:  {{ $('Parse data').item.json.company_name }} - {{ $('Parse data').item.json.plan }}",
-        "html": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    A contract for <strong>{{ $('Parse data').item.json.company_name }}</strong> was already generated earlier today. \n    To avoid duplicates, the system did not create a new document.\n  </p>\n\n  <p>\n    You may access the existing contract using the link below:<br>\n    <a href=\"http://docs.google.com/document/d/{{ $('Search for existing contract').item.json.id }}\" \n       style=\"color: #1a73e8; text-decoration: underline;\">\n      http://docs.google.com/document/d/{{ $('Search for existing contract').item.json.id }}\n    </a>\n  </p>\n\n  <p>\n    <strong>Document Title:</strong> {{ $('Search for existing contract').item.json.name }}\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">ℹ️ Action Required</h3>\n\n  <p>\n    If you need to generate a new contract for this customer, please delete the existing document first and then run the contract generation process again.\n  </p>\n\n  <p>\n    This helps ensure accuracy and prevents multiple versions of the same contract from being created on the same day.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">🕒 Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n"
+        "html": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    A contract for <strong>{{ $('Parse data').item.json.company_name }}</strong> was already generated earlier today. \n    To avoid duplicates, the system did not create a new document.\n  </p>\n\n  <p>\n    You may access the existing contract using the link below:<br>\n      https://docs.google.com/document/d/{{ $('Search for existing contract').item.json.id }}\n  </p>\n\n  <p>\n    <strong>Document Title:</strong> {{ $('Search for existing contract').item.json.name }}\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">ℹ️ Action Required</h3>\n\n  <p>\n    If you need to generate a new contract for this customer, please delete the existing document first and then run the contract generation process again.\n  </p>\n\n  <p>\n    This helps ensure accuracy and prevents multiple versions of the same contract from being created on the same day.\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">🕒 Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n"
       },
       "type": "n8n-nodes-base.mailgun",
       "typeVersion": 1,
@@ -439,7 +416,7 @@
         "fromEmail": "automation@goconstellation.com",
         "toEmail": "={{ $('Parse data').item.json.notify_email }}",
         "subject": "=Contract Ready: {{ $('Parse data').item.json.company_name }} – {{ $('Parse data').item.json.plan }}",
-        "html": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    A new contract has been successfully generated and is now ready for your review before sending it to the client.\n  </p>\n\n  <p>\n    You can access the document here:<br>\n    <a href=\"http://docs.google.com/document/d/{{ $('Update contract').item.json.documentId }}\" style=\"color: #1a73e8; text-decoration: underline;\">\n      http://docs.google.com/document/d/{{ $('Update contract').item.json.documentId }}\n    </a>\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">📄 Contract Summary</h3>\n\n  <p><strong>Company:</strong> {{ $('Parse data').item.json.company_name }}</p>\n  <p><strong>Plan:</strong> {{ $('Parse data').item.json.plan }}</p>\n  <p><strong>Monthly Cost:</strong> {{ $('Parse data').item.json.monthly_cost }}</p>\n  <p><strong>Service Fee:</strong> {{ $('Parse data').item.json.service_fee }}</p>\n  <p><strong>Contract Start Date:</strong> {{ $('Parse data').item.json.contract_start_date }}</p>\n  <p><strong>Contract End Date:</strong> {{ $('Parse data').item.json.contract_end_date }}</p>\n  <p><strong>Term Length:</strong> {{ $('Parse data').item.json.term_length }} months</p>\n  <p><strong>Total Contract Value:</strong> {{ $('Parse data').item.json.total_value }}</p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">✔️ Next Steps for You</h3>\n  <ol style=\"padding-left: 18px;\">\n    <li>Review the generated contract for accuracy.</li>\n    <li>If everything looks correct, send it to the client for their e-signature.</li>\n    <li>If updates or corrections are needed, please reply to this email with the details.</li>\n  </ol>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">🕒 Generation Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n"
+        "html": "=<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #333;\">\n  <p>\n    A new contract has been successfully generated and is now ready for your review before sending it to the client.\n  </p>\n\n  <p>\n    You can access the document here:<br>\n    \n      https://docs.google.com/document/d/{{ $('Update contract').item.json.documentId }}\n  </p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">📄 Contract Summary</h3>\n\n  <p><strong>Company:</strong> {{ $('Parse data').item.json.company_name }}</p>\n  <p><strong>Plan:</strong> {{ $('Parse data').item.json.plan }}</p>\n  <p><strong>Monthly Cost:</strong> {{ $('Parse data').item.json.monthly_cost }}</p>\n  <p><strong>Service Fee:</strong> {{ $('Parse data').item.json.service_fee }}</p>\n  <p><strong>Contract Start Date:</strong> {{ $('Parse data').item.json.contract_start_date }}</p>\n  <p><strong>Contract End Date:</strong> {{ $('Parse data').item.json.contract_end_date }}</p>\n  <p><strong>Term Length:</strong> {{ $('Parse data').item.json.term_length }} months</p>\n  <p><strong>Total Contract Value:</strong> {{ $('Parse data').item.json.total_value }}</p>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">✔️ Next Steps for You</h3>\n  <ol style=\"padding-left: 18px;\">\n    <li>Review the generated contract for accuracy.</li>\n    <li>If everything looks correct, send it to the client for their e-signature.</li>\n    <li>If updates or corrections are needed, please reply to this email with the details.</li>\n  </ol>\n\n  <hr style=\"border: 0; border-top: 1px solid #ddd; margin: 24px 0;\">\n\n  <h3 style=\"margin-bottom: 10px;\">🕒 Generation Timestamp</h3>\n  <p><strong>{{ $now.toFormat('MM/dd/yyyy HH:mm:ss') }}</strong></p>\n\n  <p style=\"margin-top: 24px;\">\n    Thank you,<br>\n    <strong>Automated Contract Preparation System</strong>\n  </p>\n</div>\n"
       },
       "type": "n8n-nodes-base.mailgun",
       "typeVersion": 1,
@@ -571,34 +548,53 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -2768,
-        400
+        -2800,
+        384
       ],
       "typeVersion": 1,
       "id": "84cc3c42-ea71-4b1a-b6a7-7e4590878599",
       "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "fromEmail": "automation@goconstellation.com",
+        "toEmail": "={{ $('Google Sheets Trigger').item.json['Notify Email When Done'] }}",
+        "subject": "=Unable to generate contract:  {{ $('Google Sheets Trigger').item.json['Company Name'] }} - {{ $('Google Sheets Trigger').item.json.Plan }}",
+        "html": "={{ $json.html }}"
+      },
+      "type": "n8n-nodes-base.mailgun",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        320
+      ],
+      "id": "41774126-5313-47c3-8cf9-6b0ae07793e6",
+      "name": "Send a unable to generate contract via Mailgun",
+      "credentials": {
+        "mailgunApi": {
+          "id": "3po7gTsfww3e5RDw",
+          "name": "Mailgun account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### IMPORTANT!\n\nPlease do not manually edit the Google Sheet Response from Google Form. There will be test rows there, but please do not delete any of them. If you need it's data for reporting, please kindly make a copy and edit from there. Thank you!",
+        "height": 208,
+        "width": 336,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2992,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "f8c87aeb-9d08-4082-9aa9-d2a354fb0268",
+      "name": "Sticky Note5"
     }
   ],
   "pinData": {
-    "Google Sheets Trigger": [
-      {
-        "json": {
-          "Timestamp": "12/5/2025 0:54:58",
-          "Email Address": "hiro.alexandre.abejo@gmail.com",
-          "Company Name": "Hiromina LTD",
-          "Address": "CP Garcia St.",
-          "City": "New York",
-          "State": "NY",
-          "Zip Code": 30001,
-          "Plan": "Growth Plan",
-          "Service Fee": 700,
-          "Start Date": "12/8/2025",
-          "Term Length (In Months)": 12,
-          "Monthly Cost": 700,
-          "Notify Email When Done": "hiro.alexandre.abejo@gmail.com"
-        }
-      }
-    ],
     "Copy contract template": [
       {
         "json": {
@@ -636,6 +632,25 @@
         "json": {
           "id": "<20251204175122.2b6b612247fcc74c@mg.goconstellation.com>",
           "message": "Queued. Thank you."
+        }
+      }
+    ],
+    "Google Sheets Trigger": [
+      {
+        "json": {
+          "Timestamp": "12/5/2025 23:27:02",
+          "Email Address": "shellygracesemillano0013@gmail.com",
+          "Company Name": "Team Clarity Branch 2",
+          "Address": "CP Garcia St",
+          "City": "New York",
+          "State": "NY",
+          "Zip Code": 30001,
+          "Plan": "Enterprise Plan",
+          "Service Fee": 700.5,
+          "Start Date": "12/2/2025",
+          "Term Length (In Months)": 12,
+          "Monthly Cost": 9999.99,
+          "Notify Email When Done": "shellygracesemillano0013@gmail.com"
         }
       }
     ]
@@ -782,7 +797,7 @@
       "main": [
         [
           {
-            "node": "Send an invalid fields error message",
+            "node": "Send a unable to generate contract via Mailgun",
             "type": "main",
             "index": 0
           }
@@ -816,10 +831,9 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "executionTimeout": -1,
     "availableInMCP": false
   },
-  "versionId": "4ee98e72-57ab-4497-8178-d23a0cf23898",
+  "versionId": "86d23613-e621-4fdf-aa30-bc5fd878fc48",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4e5736935580e3dce6e75f23d24e3c8372331788d6ecf5f4a287b0bdfa6129c9"
